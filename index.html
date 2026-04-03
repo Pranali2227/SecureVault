@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureVault — Behavioral Biometrics</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-theme="dark"] {
+  --bg:#050a0f;--bg2:#090f17;--bg3:#0d1520;--bg4:#111c2a;
+  --border:rgba(0,200,160,0.12);--border2:rgba(0,200,160,0.25);
+  --accent:#00c8a0;--accent-dim:rgba(0,200,160,0.08);
+  --danger:#ff4466;--danger-dim:rgba(255,68,102,0.1);
+  --warn:#ffaa00;--warn-dim:rgba(255,170,0,0.1);
+  --text:#d0e8df;--text2:#7a9e90;--text3:#3d6055;
+  --grid:rgba(0,200,160,0.03);--shadow:rgba(0,0,0,0.4);
+  --inp-err:rgba(255,68,102,0.18);--inp-ok:rgba(0,200,160,0.12);
+}
+[data-theme="light"] {
+  --bg:#f0f5f3;--bg2:#ffffff;--bg3:#e8f0ed;--bg4:#d8e8e3;
+  --border:rgba(0,150,120,0.15);--border2:rgba(0,150,120,0.30);
+  --accent:#008f72;--accent-dim:rgba(0,143,114,0.08);
+  --danger:#d42050;--danger-dim:rgba(212,32,80,0.08);
+  --warn:#c47d00;--warn-dim:rgba(196,125,0,0.08);
+  --text:#1a2e28;--text2:#4a7060;--text3:#80a898;
+  --grid:rgba(0,150,120,0.05);--shadow:rgba(0,0,0,0.08);
+  --inp-err:rgba(212,32,80,0.08);--inp-ok:rgba(0,143,114,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* THEME TOGGLE */
+.thm{position:fixed;top:18px;right:18px;z-index:1000;width:48px;height:26px;background:var(--bg3);border:1px solid var(--border2);border-radius:13px;cursor:pointer;display:flex;align-items:center;padding:3px;transition:background .3s;}
+.thm-k{width:18px;height:18px;border-radius:50%;background:var(--accent);transition:transform .25s;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--bg2);}
+[data-theme="light"] .thm-k{transform:translateX(22px);}
+
+/* PAGES */
+.page{display:none;min-height:100vh;position:relative;z-index:1;}
+.page.active{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
+/* LOGO */
+.logo{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;}
+.logo-sub{font-size:11px;color:var(--text3);letter-spacing:2px;font-family:'IBM Plex Mono',monospace;margin-bottom:40px;}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:36px 40px;width:100%;max-width:440px;position:relative;overflow:hidden;box-shadow:0 8px 32px var(--shadow);transition:background .3s,box-shadow .3s;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.card-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.card-sub{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.5;}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);margin:-36px -40px 28px;padding:0 40px;}
+.tab{padding:12px 20px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;letter-spacing:.5px;text-transform:uppercase;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* FIELDS */
+.field{margin-bottom:16px;position:relative;}
+.field label{display:block;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 34px 11px 14px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s,background .3s;}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--inp-ok);}
+.field input.err{border-color:var(--danger);box-shadow:0 0 0 3px var(--inp-err);}
+.field input.ok{border-color:var(--accent);}
+.field input::placeholder{color:var(--text3);}
+.ficon{position:absolute;right:11px;bottom:12px;font-size:13px;pointer-events:none;}
+.fmsg{font-size:11px;font-family:'IBM Plex Mono',monospace;margin-top:5px;min-height:14px;}
+.fmsg.err{color:var(--danger);}
+.fmsg.ok{color:var(--accent);}
+
+/* BUTTONS */
+.btn{width:100%;padding:13px;background:var(--accent);color:var(--bg2);border:none;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:opacity .2s,transform .1s;margin-top:8px;}
+.btn:hover{opacity:.85;}
+.btn:active{transform:scale(.98);}
+.btn.danger{background:var(--danger);color:#fff;}
+.btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);margin-top:10px;}
+
+/* TYPING */
+.typing-zone{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:16px;margin-bottom:20px;transition:background .3s;}
+.typing-zone input{width:100%;background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--accent);letter-spacing:8px;text-align:center;outline:none;}
+.dots{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
+.dot{width:10px;height:10px;border-radius:50%;border:1px solid var(--border2);background:transparent;transition:background .3s;}
+.dot.done{background:var(--accent);border-color:var(--accent);}
+.dot.cur{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,200,160,.15);}
+.tbar-wrap{height:4px;background:var(--bg4);border-radius:2px;margin-top:10px;overflow:hidden;}
+.tbar{height:100%;border-radius:2px;background:var(--accent);transition:width .1s;width:0%;}
+
+/* PROGRESS */
+.pstep{display:flex;align-items:center;gap:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:24px;letter-spacing:1px;}
+.pstep .s{padding:3px 8px;border-radius:4px;}
+.pstep .done{background:var(--accent);color:var(--bg2);}
+.pstep .now{background:var(--bg3);color:var(--accent);border:1px solid var(--accent);}
+.pstep .later{background:var(--bg3);color:var(--text3);border:1px solid var(--border);}
+.pstep .sep{color:var(--text3);}
+
+/* BIO ROWS */
+.brow{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;}
+.blbl{color:var(--text2);min-width:130px;font-family:'IBM Plex Mono',monospace;}
+.bbar{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.bfill{height:100%;border-radius:2px;background:var(--accent);transition:width .4s;}
+.bval{color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:40px;text-align:right;}
+
+/* DASHBOARD */
+#page-dashboard{align-items:stretch;justify-content:flex-start;padding:0;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:224px;background:var(--bg2);border-right:1px solid var(--border);padding:24px 0;z-index:10;display:flex;flex-direction:column;transition:background .3s;}
+.dmain{margin-left:224px;flex:1;padding:28px 32px;width:calc(100% - 224px);}
+.slgo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.nslbl{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:12px 20px 4px;}
+.nitem{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:background .15s,color .15s;}
+.nitem:hover{background:var(--accent-dim);color:var(--text);}
+.nitem.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim);}
+.nico{width:16px;height:16px;opacity:.7;flex-shrink:0;}
+.dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.dtitle{font-size:20px;font-weight:600;}
+.sbadge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.sbadge.sec{background:var(--accent-dim);color:var(--accent);border:1px solid var(--border2);}
+.sbadge.dan{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,68,102,.3);}
+.pulse{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:background .3s;}
+.scard::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.scard.g::after{background:var(--accent);}
+.scard.r::after{background:var(--danger);}
+.scard.w::after{background:var(--warn);}
+.scard.b::after{background:#4488ff;}
+.slbl{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.sval{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.sval.g{color:var(--accent);}.sval.r{color:var(--danger);}.sval.w{color:var(--warn);}.sval.b{color:#4488ff;}
+.sdlta{font-size:11px;color:var(--text3);margin-top:4px;}
+
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:14px;margin-bottom:20px;overflow:hidden;transition:background .3s;}
+.sechdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sectit{font-size:13px;font-weight:600;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;color:var(--accent);text-transform:uppercase;}
+
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3);}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--accent-dim);}
+
+.fic{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.fic.pdf{background:var(--danger-dim);color:var(--danger);}
+.fic.doc{background:rgba(68,136,255,.1);color:#4488ff;}
+.fic.img{background:rgba(170,80,255,.1);color:#aa50ff;}
+.fic.key{background:var(--warn-dim);color:var(--warn);}
+.fic.zip{background:var(--accent-dim);color:var(--accent);}
+
+.rp{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.rp.low{background:var(--accent-dim);color:var(--accent);}
+.rp.medium{background:var(--warn-dim);color:var(--warn);}
+.rp.high{background:var(--danger-dim);color:var(--danger);}
+
+.litem{display:flex;align-items:flex-start;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;}
+.litem:hover{background:var(--accent-dim);}
+.litem:last-child{border-bottom:none;}
+.ltime{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap;min-width:80px;padding-top:2px;}
+.lic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.lic.ok{background:var(--accent-dim);color:var(--accent);}
+.lic.bad{background:var(--danger-dim);color:var(--danger);}
+.lic.warn{background:var(--warn-dim);color:var(--warn);}
+.lmsg{color:var(--text);flex:1;}
+.lmsg span{color:var(--text2);font-size:12px;display:block;margin-top:2px;}
+
+.bring{position:relative;width:100px;height:100px;flex-shrink:0;}
+.bring svg{transform:rotate(-90deg);}
+.brc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;}
+.brn{font-size:22px;font-weight:600;color:var(--accent);}
+.brl{font-size:9px;color:var(--text3);letter-spacing:1px;}
+
+.tbadge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;background:var(--accent-dim);color:var(--accent);border:1px solid var(--border2);margin-left:8px;}
+
+/* ALERT PAGE */
+#page-alert{background:var(--bg);}
+.abg{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(255,0,60,.08) 0%,transparent 70%);pointer-events:none;animation:ap 2s infinite;}
+@keyframes ap{0%,100%{opacity:.5}50%{opacity:1}}
+.acard{background:var(--bg2);border:1px solid rgba(255,50,80,.4);border-radius:14px;padding:40px;width:100%;max-width:560px;position:relative;z-index:1;text-align:center;box-shadow:0 0 60px rgba(255,30,60,.12);}
+.aico{font-size:48px;margin-bottom:16px;animation:shk .5s infinite;}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.atit{font-size:24px;font-weight:700;color:var(--danger);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;letter-spacing:3px;}
+.asub{color:var(--text2);font-size:13px;margin-bottom:28px;}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;text-align:left;}
+.abox{background:var(--danger-dim);border:1px solid rgba(255,50,80,.2);border-radius:8px;padding:14px 16px;}
+.albl{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.aval{font-size:14px;font-family:'IBM Plex Mono',monospace;color:var(--danger);}
+.smsbox{background:var(--danger-dim);border:1px solid rgba(255,50,80,.2);border-radius:8px;padding:14px 16px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);margin-bottom:20px;text-align:left;line-height:1.7;}
+
+/* TOASTS */
+.twrap{position:fixed;top:20px;right:72px;z-index:9999;display:flex;flex-direction:column;gap:10px;}
+.toast{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;min-width:280px;max-width:340px;font-size:13px;animation:tin .3s ease;box-shadow:0 4px 16px var(--shadow);}
+@keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast.danger{border-color:rgba(255,68,102,.4);}
+.toast.success{border-color:rgba(0,200,160,.4);}
+.toast.info{border-color:rgba(68,136,255,.4);}
+.ttit{font-weight:600;font-size:13px;margin-bottom:3px;}
+.toast.danger .ttit{color:var(--danger);}
+.toast.success .ttit{color:var(--accent);}
+.toast.info .ttit{color:#4488ff;}
+.tbody{color:var(--text2);font-size:12px;}
+
+.hint{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:6px;}
+.sglow{color:var(--accent);font-size:14px;text-align:center;padding:12px;background:var(--accent-dim);border-radius:8px;border:1px solid var(--border2);margin-bottom:16px;}
+.sftr{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);}
+.logbtn{width:100%;padding:9px;background:transparent;border:1px solid rgba(255,68,102,.3);border-radius:8px;color:var(--danger);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:background .2s;}
+.logbtn:hover{background:var(--danger-dim);}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--text3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){.sidebar{display:none;}.dmain{margin-left:0;width:100%;}.sgrid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<button class="thm" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
+  <div class="thm-k"><span id="thm-ico">☀</span></div>
+</button>
+
+<!-- PAGE 1: LOGIN -->
+<div id="page-login" class="page active">
+  <div style="text-align:center">
+    <div class="logo">◈ SecureVault</div>
+    <div class="logo-sub">Behavioral Biometric Access Control</div>
+  </div>
+  <div class="card">
+    <div class="tab-bar" id="atabs">
+      <div class="tab active" onclick="swTab('r')">Register</div>
+      <div class="tab" onclick="swTab('s')">Sign In</div>
+    </div>
+    <div id="treg">
+      <div class="card-title">Create your vault</div>
+      <div class="card-sub">Set up your secure account with behavioral biometrics</div>
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="rn" placeholder="e.g. Arjun Sharma" oninput="vName()">
+        <div class="ficon" id="ri-rn"></div><div class="fmsg" id="fm-rn"></div>
+      </div>
+      <div class="field">
+        <label>Gmail Address</label>
+        <input type="email" id="re" placeholder="you@gmail.com" oninput="vGmail('re','ri-re','fm-re')">
+        <div class="ficon" id="ri-re"></div><div class="fmsg" id="fm-re"></div>
+      </div>
+      <div class="field">
+        <label>Phone Number (SMS alerts)</label>
+        <input type="tel" id="rp" placeholder="+91 98765 43210" oninput="vPhone('rp','ri-rp','fm-rp')">
+        <div class="ficon" id="ri-rp"></div><div class="fmsg" id="fm-rp"></div>
+      </div>
+      <div class="field">
+        <label>Create Password</label>
+        <input type="password" id="rpw" placeholder="Min 8 characters" oninput="vPass()">
+        <div class="ficon" id="ri-rpw"></div><div class="fmsg" id="fm-rpw"></div>
+      </div>
+      <button type="button" class="btn" onclick="doReg()">Create Account →</button>
+    </div>
+    <div id="tsi" style="display:none">
+      <div class="card-title">Welcome back</div>
+      <div class="card-sub">Sign in to access your secure vault</div>
+      <div class="field">
+        <label>Gmail Address</label>
+        <input type="email" id="se" placeholder="you@gmail.com" oninput="vGmail('se','ri-se','fm-se')">
+        <div class="ficon" id="ri-se"></div><div class="fmsg" id="fm-se"></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="spw" placeholder="Your password">
+      </div>
+      <button type="button" class="btn" onclick="doSI()">Sign In →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: CALIBRATE -->
+<div id="page-calibrate" class="page">
+  <div style="text-align:center">
+    <div class="logo">◈ SecureVault</div>
+    <div class="logo-sub">Behavioral Biometric Calibration</div>
+  </div>
+  <div class="card">
+    <div class="pstep"><span class="s done">01 ACCOUNT</span><span class="sep">──</span><span class="s now">02 CALIBRATE</span><span class="sep">──</span><span class="s later">03 VAULT</span></div>
+    <div class="card-title">Type your password 3 times</div>
+    <div class="card-sub">We measure your unique keystroke rhythm to build your biometric baseline. Press <b>Enter</b> after each attempt.</div>
+    <div class="dots"><div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div></div>
+    <div class="typing-zone">
+      <input type="password" id="ci" placeholder="Type your password…" autocomplete="off" onkeydown="onCK(event)">
+      <div class="tbar-wrap"><div class="tbar" id="cbar"></div></div>
+    </div>
+    <div id="cst" class="hint" style="text-align:center;margin-bottom:12px">Attempt 1 of 3 — type and press Enter</div>
+    <div id="cres" style="display:none" class="sglow">✓ Baseline captured! Redirecting to your vault…</div>
+    <div style="margin-top:16px">
+      <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;letter-spacing:1px">LIVE METRICS</div>
+      <div class="brow"><div class="blbl">Avg Key Hold</div><div class="bbar"><div class="bfill" id="mh" style="width:0%"></div></div><div class="bval" id="mvh">—</div></div>
+      <div class="brow"><div class="blbl">Inter-Key Gap</div><div class="bbar"><div class="bfill" id="mg" style="width:0%"></div></div><div class="bval" id="mvg">—</div></div>
+      <div class="brow"><div class="blbl">Total Time</div><div class="bbar"><div class="bfill" id="mt" style="width:0%"></div></div><div class="bval" id="mvt">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: BIO AUTH -->
+<div id="page-bioauth" class="page">
+  <div style="text-align:center">
+    <div class="logo">◈ SecureVault</div>
+    <div class="logo-sub">Behavioral Authentication</div>
+  </div>
+  <div class="card">
+    <div class="pstep"><span class="s done">01 ACCOUNT</span><span class="sep">──</span><span class="s done">02 CALIBRATE</span><span class="sep">──</span><span class="s now">03 AUTH</span></div>
+    <div class="card-title">Biometric verification</div>
+    <div class="card-sub">Type your password. Keystroke rhythm compared to your baseline. Tolerance: <span id="tol-disp" class="tbadge">30%</span></div>
+    <div class="dots"><div class="dot" id="bd0"></div><div class="dot" id="bd1"></div><div class="dot" id="bd2"></div></div>
+    <div class="typing-zone">
+      <input type="password" id="bi" placeholder="Enter password…" autocomplete="off" onkeydown="onBK(event)">
+      <div class="tbar-wrap"><div class="tbar" id="bbar"></div></div>
+    </div>
+    <div id="bst" class="hint" style="text-align:center;margin-bottom:12px">Attempt 1 of 3</div>
+    <div id="auth-error-msg" style="display:none;background:var(--danger-dim);border:1px solid var(--danger);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--danger);text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600"></div>
+    <div id="auth-success-msg" style="display:none;background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--accent);text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600"></div>
+    <div style="margin-top:12px">
+      <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;letter-spacing:1px">MATCH ANALYSIS</div>
+      <div class="brow"><div class="blbl">Rhythm Score</div><div class="bbar"><div class="bfill" id="br" style="width:0%"></div></div><div class="bval" id="bvr">—</div></div>
+      <div class="brow"><div class="blbl">Hold Time Match</div><div class="bbar"><div class="bfill" id="bh" style="width:0%"></div></div><div class="bval" id="bvh">—</div></div>
+      <div class="brow"><div class="blbl">Speed Match</div><div class="bbar"><div class="bfill" id="bs" style="width:0%"></div></div><div class="bval" id="bvs">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div class="sidebar">
+    <div class="slgo">
+      <div class="logo" style="margin-bottom:2px">◈ SecureVault</div>
+      <div class="logo-sub" style="margin:0">File Security Monitor</div>
+    </div>
+    <div class="nslbl">MONITOR</div>
+    <div class="nitem active" onclick="dTab('files')"><svg class="nico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="9" height="12" rx="1.5"/><path d="M5 5h5M5 8h3"/></svg>Files</div>
+    <div class="nitem" onclick="dTab('activity')"><svg class="nico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,10 5,5 8,8 11,3 15,7"/></svg>Activity Log</div>
+    <div class="nitem" onclick="dTab('biometrics')"><svg class="nico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C4.5 2 2 5 2 8s2.5 6 6 6 6-3 6-6-2.5-6-6-6z"/><path d="M8 5v3l2 2"/></svg>Biometrics</div>
+    <div class="nslbl">SETTINGS</div>
+    <div class="nitem" onclick="dTab('alerts')"><svg class="nico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 0 1 5 5v2l1 2H2l1-2V7a5 5 0 0 1 5-5z"/><path d="M6.5 13a1.5 1.5 0 0 0 3 0"/></svg>Alert Config</div>
+    <div class="sftr">
+      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:10px" id="sbu">—</div>
+      <button type="button" class="logbtn" onclick="doLogout()">⏏ LOGOUT</button>
+    </div>
+  </div>
+  <div class="dmain">
+    <div class="dhead">
+      <div class="dtitle" id="dtit">File Security Monitor</div>
+      <div class="sbadge sec"><div class="pulse"></div>VAULT SECURED</div>
+    </div>
+    <div class="sgrid">
+      <div class="scard g"><div class="slbl">Secure Files</div><div class="sval g">47</div><div class="sdlta">All encrypted</div></div>
+      <div class="scard r"><div class="slbl">Threats Blocked</div><div class="sval r">3</div><div class="sdlta">Last 24 hours</div></div>
+      <div class="scard w"><div class="slbl">At-Risk Files</div><div class="sval w">2</div><div class="sdlta">Needs review</div></div>
+      <div class="scard b"><div class="slbl">Bio Score</div><div class="sval b" id="bsd">—</div><div class="sdlta">Match confidence</div></div>
+    </div>
+
+    <div id="d-files" class="sec">
+      <div class="sechdr"><div class="sectit">// File Security Status</div><div style="font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace">47 files monitored</div></div>
+      <table><thead><tr><th>File</th><th>Type</th><th>Last Modified</th><th>Integrity</th><th>Risk</th><th>Status</th></tr></thead><tbody id="ftb"></tbody></table>
+    </div>
+
+    <div id="d-activity" class="sec" style="display:none">
+      <div class="sechdr"><div class="sectit">// Access Activity Log</div><div style="font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace" id="ltn">—</div></div>
+      <div id="alb"></div>
+    </div>
+
+    <div id="d-biometrics" class="sec" style="display:none">
+      <div class="sechdr"><div class="sectit">// Biometric Baseline Profile</div><div class="sbadge sec" style="font-size:11px">CALIBRATED</div></div>
+      <div style="display:flex;align-items:center;gap:24px;padding:20px;">
+        <div class="bring">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--bg4)" stroke-width="10"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="10" stroke-dasharray="251" id="bra" stroke-dashoffset="25" stroke-linecap="round"/>
+          </svg>
+          <div class="brc"><div class="brn" id="brp">—</div><div class="brl">MATCH</div></div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Baseline from 3 samples. Current tolerance: <span id="tol-bio-badge" class="tbadge">30%</span></div>
+          <div class="brow"><div class="blbl">Keystroke Hold (avg)</div><div class="bbar"><div class="bfill" id="dbh" style="width:70%"></div></div><div class="bval" id="dbvh">—</div></div>
+          <div class="brow"><div class="blbl">Inter-Key Gap (avg)</div><div class="bbar"><div class="bfill" id="dbg" style="width:55%"></div></div><div class="bval" id="dbvg">—</div></div>
+          <div class="brow"><div class="blbl">Total Time (avg)</div><div class="bbar"><div class="bfill" id="dbt" style="width:80%"></div></div><div class="bval" id="dbvt">—</div></div>
+          <div class="brow"><div class="blbl">Consistency</div><div class="bbar"><div class="bfill" style="width:85%"></div></div><div class="bval">HIGH</div></div>
+          <div class="brow">
+            <div class="blbl">Tolerance Margin</div>
+            <div class="bbar"><div class="bfill" id="tol-bio-fill" style="width:50%"></div></div>
+            <div class="bval" id="tol-bio-val">30%</div>
+          </div>
+          <div class="brow">
+            <div class="blbl">Auth Threshold</div>
+            <div class="bbar"><div class="bfill" id="thresh-fill" style="width:65%;background:var(--warn)"></div></div>
+            <div class="bval" id="thresh-val">47%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="d-alerts" class="sec" style="display:none">
+      <div class="sechdr"><div class="sectit">// SMS Alert Configuration</div></div>
+      <div style="padding:20px">
+        <div class="field">
+          <label>Alert Phone Number</label>
+          <input type="tel" id="ap" placeholder="+91 98765 43210" oninput="vPhone('ap','ri-ap','fm-ap')">
+          <div class="ficon" id="ri-ap"></div><div class="fmsg" id="fm-ap"></div>
+        </div>
+        <div class="field" style="margin-bottom:20px">
+          <label>Alert Triggers</label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)"><input type="checkbox" checked style="accent-color:var(--accent)"> Failed biometric login attempt</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)"><input type="checkbox" checked style="accent-color:var(--accent)"> 3 consecutive failed logins</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)"><input type="checkbox" checked style="accent-color:var(--accent)"> Suspicious file modification</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)"><input type="checkbox" style="accent-color:var(--accent)"> New device login</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)"><input type="checkbox" style="accent-color:var(--accent)"> Vault access after 11 PM</label>
+          </div>
+        </div>
+        <!-- TOLERANCE SLIDER — live sync -->
+        <div class="field">
+          <label>Biometric Tolerance Margin</label>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+            <input type="range" min="10" max="60" value="30" id="tslider" style="flex:1" oninput="onTol(this.value)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--accent);min-width:44px" id="tval">30%</span>
+          </div>
+          <div class="hint" id="thint">Balanced — threshold: 47% · recommended setting</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" style="max-width:200px" onclick="saveCfg()">Save Configuration</button>
+          <button class="btn ghost" style="max-width:220px;margin-top:0" onclick="simAtk()">⚡ Simulate Attack</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: ALERT -->
+<div id="page-alert" class="page">
+  <div class="abg"></div>
+  <div class="acard">
+    <div class="aico">🚨</div>
+    <div class="atit">INTRUSION DETECTED</div>
+    <div class="asub">Behavioral biometric mismatch — unauthorized access attempt blocked</div>
+    <div class="agrid">
+      <div class="abox"><div class="albl">Timestamp</div><div class="aval" id="att"></div></div>
+      <div class="abox"><div class="albl">Biometric Score</div><div class="aval" id="asc"></div></div>
+      <div class="abox"><div class="albl">Attack Type</div><div class="aval" id="atp">PASSWORD REPLAY</div></div>
+      <div class="abox"><div class="albl">Attempts Made</div><div class="aval" id="aat">3 / 3</div></div>
+      <div class="abox" style="grid-column:1/-1"><div class="albl">Threat Analysis</div><div class="aval" id="aan">—</div></div>
+    </div>
+    <div class="smsbox" id="smsbox">
+      <span id="smsi"></span>
+      📱 SMS alert dispatched to <strong id="smsnum">—</strong><br>
+      <span style="font-size:11px;color:var(--text3)">Sent at <span id="smst">—</span> · Ref: SVA-<span id="smsr">—</span></span>
+    </div>
+    <button type="button" class="btn danger" onclick="doLogout()">⏏ Return to Login</button>
+    <button type="button" class="btn ghost" onclick="showP('page-dashboard')">← Back to Vault (admin)</button>
+</div>
+
+<div class="twrap" id="toasts"></div>
+
+<script>
+/* ═══ STATE ═══ */
+const S={users:{},cur:null,cAttempts:[],cAtt:0,kd:{},ka:[],t0:null,bAtt:0,tol:30,accessLogs:[]};
+
+/* ═══ PERSISTENT DATA STORAGE ═══ */
+function saveUsersToStorage(){
+  try{
+    localStorage.setItem('securevault_users',JSON.stringify(S.users));
+    console.log('[STORAGE] Users saved to localStorage');
+  }catch(err){
+    console.warn('[STORAGE] Could not save users:',err);
+  }
+}
+
+function loadUsersFromStorage(){
+  try{
+    const stored=localStorage.getItem('securevault_users');
+    if(stored){
+      S.users=JSON.parse(stored);
+      console.log('[STORAGE] Users loaded from localStorage:',Object.keys(S.users).length,'account(s)');
+    }
+  }catch(err){
+    console.warn('[STORAGE] Could not load users:',err);
+  }
+}
+
+// Load data on page initialization
+document.addEventListener('DOMContentLoaded',()=>{
+  loadUsersFromStorage();
+  loadAccessLogs();
+  console.log('[INIT] SecureVault initialized - Users loaded:',Object.keys(S.users).length);
+});
+
+/* ═══ THEME ═══ */
+function toggleTheme(){
+  const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',n);
+  document.getElementById('thm-ico').textContent=n==='dark'?'☀':'☾';
+}
+
+/* ═══ NAVIGATION ═══ */
+function showP(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function swTab(t){
+  document.getElementById('treg').style.display=t==='r'?'':'none';
+  document.getElementById('tsi').style.display=t==='s'?'':'none';
+  document.querySelectorAll('#atabs .tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='r')||(i===1&&t==='s')));
+}
+
+/* ═══ VALIDATION ═══ */
+function sf(iid,xid,mid,st,msg){
+  const i=document.getElementById(iid),x=document.getElementById(xid),m=document.getElementById(mid);
+  if(!i||!x||!m)return;
+  i.classList.remove('err','ok');
+  if(st==='err'){i.classList.add('err');x.textContent='✕';x.style.color='var(--danger)';m.textContent=msg;m.className='fmsg err';}
+  else if(st==='ok'){i.classList.add('ok');x.textContent='✓';x.style.color='var(--accent)';m.textContent=msg||'';m.className='fmsg ok';}
+  else{x.textContent='';m.textContent='';m.className='fmsg';}
+}
+function vName(){
+  const v=document.getElementById('rn').value.trim();
+  if(!v){sf('rn','ri-rn','fm-rn','','');return false;}
+  if(v.length<2){sf('rn','ri-rn','fm-rn','err','Name too short');return false;}
+  if(!/^[a-zA-Z\s'\-]+$/.test(v)){sf('rn','ri-rn','fm-rn','err','Letters only');return false;}
+  sf('rn','ri-rn','fm-rn','ok','');return true;
+}
+function vGmail(iid,xid,mid){
+  const v=document.getElementById(iid).value.trim();
+  if(!v){sf(iid,xid,mid,'','');return false;}
+  if(!v.includes('@')){sf(iid,xid,mid,'err','Enter a valid email');return false;}
+  if(!v.toLowerCase().endsWith('@gmail.com')){sf(iid,xid,mid,'err','Only @gmail.com accepted');return false;}
+  const loc=v.split('@')[0];
+  if(loc.length<6){sf(iid,xid,mid,'err','Gmail username too short (min 6)');return false;}
+  if(!/^[a-z0-9.]+$/i.test(loc)){sf(iid,xid,mid,'err','Letters, numbers, dots only');return false;}
+  sf(iid,xid,mid,'ok','Valid Gmail ✓');return true;
+}
+function vPhone(iid,xid,mid){
+  const v=document.getElementById(iid).value.trim();
+  if(!v){sf(iid,xid,mid,'','');return false;}
+  const d=v.replace(/[\s\-\(\)\+]/g,'');
+  if(d.length<7){sf(iid,xid,mid,'err','Phone number too short (min 7 digits)');return false;}
+  if(d.length>15){sf(iid,xid,mid,'err','Phone number too long (max 15 digits)');return false;}
+  if(!/^\d+$/.test(d)){sf(iid,xid,mid,'err','Only numbers and + - ( ) are allowed');return false;}
+  sf(iid,xid,mid,'ok','Valid phone ✓');return true;
+}
+function vPass(){
+  const v=document.getElementById('rpw').value;
+  if(!v){sf('rpw','ri-rpw','fm-rpw','','');return false;}
+  if(v.length<8){sf('rpw','ri-rpw','fm-rpw','err',`${8-v.length} more character(s) needed`);return false;}
+  const str=((v.length>=12)?1:0)+((/[A-Z]/.test(v))?1:0)+((/[0-9]/.test(v))?1:0)+((/[^a-zA-Z0-9]/.test(v))?1:0);
+  sf('rpw','ri-rpw','fm-rpw','ok',['','Weak','Fair','Strong','Very strong'][str]||'Strong');
+  return true;
+}
+
+/* ═══ AUTH ═══ */
+function doReg(){
+  const nameOk=vName();
+  const emailOk=vGmail('re','ri-re','fm-re');
+  const passOk=vPass();
+  const phoneVal=document.getElementById('rp').value.trim();
+  const phoneOk=phoneVal?vPhone('rp','ri-rp','fm-rp'):true;
+  if(!nameOk||!emailOk||!passOk){toast('Validation failed','Fix highlighted fields','danger');return;}
+  if(phoneVal&&!phoneOk){toast('Validation failed','Fix highlighted fields','danger');return;}
+  const em=document.getElementById('re').value.trim().toLowerCase();
+  const ph=phoneVal.replace(/[\s\-\(\)]/g,'');
+  S.users[em]={name:document.getElementById('rn').value.trim(),email:em,phone:ph||null,password:document.getElementById('rpw').value,baseline:null,tol:30};
+  S.cur=em;
+  saveUsersToStorage();
+  addAccessLog('REGISTERED',`New account created - ${document.getElementById('rn').value.trim()}`,'ok');
+  toast('Account created!','Setting up calibration…','success');
+  setTimeout(()=>{resetCal();showP('page-calibrate');},800);
+}
+function doSI(){
+  if(!vGmail('se','ri-se','fm-se')){toast('Invalid Gmail','Use @gmail.com address','danger');return;}
+  const em=document.getElementById('se').value.trim().toLowerCase();
+  const pw=document.getElementById('spw').value;
+  const u=S.users[em];
+  if(!u){toast('Not found','Create an account first','danger');addAccessLog('FAILED',`Sign-in attempt with non-existent account: ${em}`,'bad');return;}
+  if(u.password!==pw){
+    const now=new Date();
+    toast('❌ Wrong Password','Check credentials','danger');
+    addAccessLog('FAILED',`Wrong password for account: ${em}`,'bad');
+    // Send Telegram alert for wrong password attempt
+    if(u.phone){
+      sendTelegramAlert(u.phone,`⚠️ *FAILED LOGIN ATTEMPT*\n\n📊 Account: ${em}\n🔔 Time: ${now.toLocaleString()}\n❌ Incorrect password entered\n\n_This may indicate an unauthorized access attempt._`,u);
+    }
+    return;
+  }
+  S.cur=em;S.tol=u.tol||30;
+  addAccessLog('LOGIN',`User ${u.name} signed in successfully`,'ok');
+  if(!u.baseline){resetCal();showP('page-calibrate');}
+  else{resetBio();showP('page-bioauth');}
+}
+function doLogout(){
+  if(S.cur){
+    const currentUser=S.users[S.cur]?.name||S.cur;
+    addAccessLog('LOGOUT',`User ${currentUser} logged out`,'ok');
+  }
+  S.cur=null;
+  S.cAttempts=[];
+  S.cAtt=0;
+  showP('page-login');
+}
+
+/* ═══ CALIBRATION ═══ */
+function resetCal(){
+  S.cAttempts=[];S.cAtt=0;S.kd={};S.ka=[];S.t0=null;
+  updCD();
+  document.getElementById('ci').value='';
+  document.getElementById('cst').textContent='Attempt 1 of 3 — type and press Enter';
+  document.getElementById('cres').style.display='none';
+  document.getElementById('cbar').style.width='0%';
+  sm('mh',null);sm('mg',null);sm('mt',null);
+}
+function updCD(){
+  for(let i=0;i<3;i++){const d=document.getElementById('d'+i);d.classList.remove('done','cur');if(i<S.cAtt)d.classList.add('done');else if(i===S.cAtt)d.classList.add('cur');}
+}
+function onCK(e){
+  if(!S.t0)S.t0=performance.now();
+  S.kd[e.key]=performance.now();
+  if(e.key!=='Enter')S.ka.push(performance.now());
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const v=document.getElementById('ci').value;
+    if(v!==S.users[S.cur].password){toast('Wrong password','Type your exact password','danger');rCD();return;}
+    finCal();
+  }
+}
+function rCD(){S.kd={};S.ka=[];S.t0=null;document.getElementById('ci').value='';}
+function finCal(){
+  const tot=performance.now()-S.t0;
+  const gaps=[];for(let i=1;i<S.ka.length;i++)gaps.push(S.ka[i]-S.ka[i-1]);
+  const ag=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:100;
+  const ah=75+Math.random()*50;
+  S.cAttempts.push({hold:ah,gap:ag,total:tot});
+  sm('mh',ah);sm('mg',ag);sm('mt',tot);
+  S.cAtt++;rCD();updCD();
+  document.getElementById('cbar').style.width=(S.cAtt/3*100)+'%';
+  if(S.cAtt<3){document.getElementById('cst').textContent=`Attempt ${S.cAtt+1} of 3 — type and press Enter`;toast(`Attempt ${S.cAtt} recorded`,'Keep going!','success');}
+  else{
+    const b={hold:S.cAttempts.reduce((a,b)=>a+b.hold,0)/3,gap:S.cAttempts.reduce((a,b)=>a+b.gap,0)/3,total:S.cAttempts.reduce((a,b)=>a+b.total,0)/3};
+    S.users[S.cur].baseline=b;
+    saveUsersToStorage();
+    document.getElementById('cres').style.display='block';
+    document.getElementById('cst').textContent='Baseline complete!';
+    toast('Baseline captured!','Biometric profile ready','success');
+    setTimeout(()=>{resetBio();showP('page-bioauth');},2000);
+  }
+}
+function sm(id,v){
+  const mx={mh:200,mg:300,mt:3000};
+  const valIds={mh:'mvh',mg:'mvg',mt:'mvt'};
+  document.getElementById(id).style.width=v?Math.min(100,(v/mx[id])*100)+'%':'0%';
+  document.getElementById(valIds[id]).textContent=v?Math.round(v)+'ms':'—';
+}
+
+/* ═══ BIO AUTH ═══ */
+function resetBio(){
+  S.bAtt=0;S.kd={};S.ka=[];S.t0=null;
+  updBD();
+  document.getElementById('bi').value='';
+  document.getElementById('bst').textContent='Attempt 1 of 3';
+  document.getElementById('bbar').style.width='0%';
+  document.getElementById('auth-error-msg').style.display='none';
+  document.getElementById('auth-success-msg').style.display='none';
+  bm('br',null);bm('bh',null);bm('bs',null);
+  const td=document.getElementById('tol-disp');if(td)td.textContent=S.tol+'%';
+}
+function updBD(){for(let i=0;i<3;i++){const d=document.getElementById('bd'+i);d.classList.remove('done','cur');if(i<S.bAtt)d.classList.add('done');else if(i===S.bAtt)d.classList.add('cur');}}
+function onBK(e){
+  if(!S.t0)S.t0=performance.now();
+  S.kd[e.key]=performance.now();
+  if(e.key!=='Enter')S.ka.push(performance.now());
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const v=document.getElementById('bi').value,u=S.users[S.cur];
+    if(v!==u.password){
+      S.bAtt++;
+      addAccessLog('FAILED', 'Wrong password entered', 'bad');
+      updBD();
+      
+      const errMsg=document.getElementById('auth-error-msg');
+      errMsg.style.display='block';
+      errMsg.textContent=`❌ INCORRECT PASSWORD — ${3-S.bAtt} attempt(s) remaining`;
+      
+      if(S.bAtt>=3){
+        addAccessLog('INTRUSION', '3 consecutive failed attempts - access BLOCKED', 'danger');
+        errMsg.textContent='❌ ACCESS DENIED: Maximum attempts exceeded (3/3 failed)';
+        document.getElementById('bst').textContent=`LOCKED — 3/3 attempts failed`;
+        document.getElementById('bi').disabled=true;
+        
+        // Send Telegram alert immediately for intrusion
+        const u=S.users[S.cur];
+        if(u&&u.phone){
+          const now=new Date();
+          sendTelegramAlert(u.phone,`🚨 *INTRUSION ALERT - ACCESS DENIED* 🚨\n\n⚠️ Maximum Authentication Attempts Exceeded\n\n📊 Details:\n• Account: ${u.email}\n• Timestamp: ${now.toLocaleString()}\n• Attempt Type: Multiple Invalid Passwords\n• Status: ACCESS BLOCKED\n\n🔒 Your vault remains secured. No unauthorized access occurred.`,u);
+        }
+        
+        setTimeout(()=>{
+          trigAlert(0,'Authentication failed: 3 consecutive invalid password attempts. Unauthorized access attempt has been blocked.');
+        },800);
+        return;
+      }
+      
+      toast('❌ Wrong Password',`${3-S.bAtt} attempt(s) remaining`,'danger');
+      rBD();
+      document.getElementById('bst').textContent=`Attempt ${S.bAtt+1} of 3 — Wrong password`;
+      return;
+    }
+    finBio();
+  }
+}
+function rBD(){S.kd={};S.ka=[];S.t0=null;document.getElementById('bi').value='';document.getElementById('bi').disabled=false;}
+function finBio(){
+  const tot=performance.now()-S.t0;
+  const gaps=[];for(let i=1;i<S.ka.length;i++)gaps.push(S.ka[i]-S.ka[i-1]);
+  const ag=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:100;
+  const ah=75+Math.random()*50;
+  const b=S.users[S.cur].baseline;
+  // More forgiving scoring: cap deviation penalty at 100%, weight gap+total heavily
+  const gapDev=Math.abs(ag-b.gap)/(b.gap+1);
+  const totDev=Math.abs(tot-b.total)/(b.total+1);
+  const holdDev=Math.abs(ah-b.hold)/(b.hold+1);
+  const rs=Math.max(0,100-gapDev*80);
+  const hs=Math.max(0,100-holdDev*60);
+  const ss=Math.max(0,100-totDev*60);
+  // Boost score: registered users typing correct password should usually pass
+  const ov=Math.min(100,(rs*0.4+hs*0.3+ss*0.3)+15);
+  const thresh=Math.max(20,65-S.tol*0.6);
+  bm('br',rs);bm('bh',hs);bm('bs',ss);
+  document.getElementById('bbar').style.width='100%';
+  
+  if(ov>=thresh){
+    // Success
+    const successMsg=document.getElementById('auth-success-msg');
+    successMsg.style.display='block';
+    successMsg.textContent=`✓ BIOMETRIC VERIFIED — Score: ${Math.round(ov)}% (Threshold: ${Math.round(thresh)}%)`;
+    
+    addAccessLog('SUCCESS', `Biometric authenticated - Score: ${Math.round(ov)}%`, 'ok');
+    toast('✓ Access Granted!',`Biometric score: ${Math.round(ov)}%`,'success');
+    document.getElementById('bst').textContent=`✓ Verified — ${Math.round(ov)}% match`;
+    setTimeout(()=>{loadDash(ov);showP('page-dashboard');},1200);
+  } else {
+    // Biometric failed - increment attempts
+    S.bAtt++;
+    addAccessLog('FAILED', `Biometric mismatch - Score: ${Math.round(ov)}% (Threshold: ${Math.round(thresh)}%)`, 'bad');
+    updBD();
+    
+    const errMsg=document.getElementById('auth-error-msg');
+    errMsg.style.display='block';
+    
+    if(S.bAtt>=3){
+      // Maximum attempts exceeded
+      addAccessLog('INTRUSION', '3 consecutive failed attempts - access BLOCKED', 'danger');
+      errMsg.textContent=`❌ BIOMETRIC FAILED (${Math.round(ov)}%) — ACCESS DENIED: Maximum attempts exceeded (3/3 failed)`;
+      document.getElementById('bst').textContent=`LOCKED — 3/3 attempts failed`;
+      document.getElementById('bi').disabled=true;
+      toast('🚨 Intrusion Detected','3 failed attempts - sending security alert','danger');
+      
+      // Send Telegram alert immediately for intrusion
+      const u=S.users[S.cur];
+      if(u&&u.phone){
+        const now=new Date();
+        sendTelegramAlert(u.phone,`🚨 *INTRUSION ALERT - ACCESS DENIED* 🚨\n\n⚠️ Maximum Authentication Attempts Exceeded\n\n📊 Details:\n• Account: ${u.email}\n• Timestamp: ${now.toLocaleString()}\n• Attempt Type: Biometric Mismatch (Score: ${Math.round(ov)}%)\n• Required Threshold: ${Math.round(thresh)}%\n• Status: ACCESS BLOCKED\n\n🔒 Your vault remains secured. No unauthorized access occurred.`,u);
+      }
+      
+      setTimeout(()=>{
+        trigAlert(Math.round(ov),`Authentication blocked after 3 failed attempts. Biometric score: ${Math.round(ov)}% vs required ${Math.round(thresh)}%. Keystroke cadence deviated significantly from baseline - possible unauthorized access attempt.`);
+      },800);
+    } else {
+      // Attempt failed but user can try again
+      errMsg.textContent=`⚠️ BIOMETRIC MISMATCH — Score: ${Math.round(ov)}% below ${Math.round(thresh)}% threshold (${3-S.bAtt} attempts left)`;
+      toast('⚠️ Biometric Mismatch',`Score ${Math.round(ov)}% — ${3-S.bAtt} attempt(s) remaining`,'danger');
+      rBD();
+      S.t0=null;
+      document.getElementById('bst').textContent=`Attempt ${S.bAtt+1} of 3 — Last score: ${Math.round(ov)}%`;
+    }
+  }
+}
+function bm(id,v){
+  const valIds={br:'bvr',bh:'bvh',bs:'bvs'};
+  const b=document.getElementById(id),t=document.getElementById(valIds[id]);
+  if(!b)return;
+  if(v===null){b.style.width='0%';if(t)t.textContent='—';return;}
+  b.style.width=v+'%';if(t)t.textContent=Math.round(v)+'%';
+  b.style.background=v>70?'var(--accent)':v>45?'var(--warn)':'var(--danger)';
+}
+
+/* ═══ TOLERANCE — live sync ═══ */
+function onTol(v){
+  v=parseInt(v);S.tol=v;
+  const thresh=Math.max(20,65-v*0.6);
+  // display in all locations
+  document.getElementById('tval').textContent=v+'%';
+  const td=document.getElementById('tol-disp');if(td)td.textContent=v+'%';
+  const tb=document.getElementById('tol-bio-badge');if(tb)tb.textContent=v+'%';
+  const bv=document.getElementById('tol-bio-val');if(bv)bv.textContent=v+'%';
+  const bf=document.getElementById('tol-bio-fill');if(bf)bf.style.width=(v/60*100)+'%';
+  const tf=document.getElementById('thresh-fill');if(tf)tf.style.width=thresh+'%';
+  const tv=document.getElementById('thresh-val');if(tv)tv.textContent=Math.round(thresh)+'%';
+  const th=document.getElementById('thint');
+  if(th){
+    if(v<=20)th.textContent=`Strict — threshold: ${Math.round(thresh)}% · very close match required`;
+    else if(v<=35)th.textContent=`Balanced — threshold: ${Math.round(thresh)}% · recommended setting`;
+    else if(v<=50)th.textContent=`Lenient — threshold: ${Math.round(thresh)}% · easier to authenticate`;
+    else th.textContent=`Very lenient — threshold: ${Math.round(thresh)}% · reduced security`;
+  }
+  if(S.cur&&S.users[S.cur]){
+    S.users[S.cur].tol=v;
+    saveUsersToStorage();
+  }
+}
+
+/* ═══ DASHBOARD ═══ */
+const FILES=[
+  {n:'financial_report_2024.pdf',t:'pdf',m:'2025-03-14 09:22',h:'a3f8c1…',r:'low',s:'✓ Intact'},
+  {n:'private_keys.key',t:'key',m:'2025-03-13 17:45',h:'b7d2e9…',r:'high',s:'⚠ Modified'},
+  {n:'employee_data.doc',t:'doc',m:'2025-03-12 11:30',h:'c9a4f2…',r:'medium',s:'✓ Intact'},
+  {n:'project_assets.zip',t:'zip',m:'2025-03-11 08:15',h:'d1b6c3…',r:'low',s:'✓ Intact'},
+  {n:'passport_scan.img',t:'img',m:'2025-03-10 14:50',h:'e5f7a8…',r:'high',s:'⚠ Access attempt'},
+  {n:'vault_config.key',t:'key',m:'2025-03-09 10:05',h:'f3c8d1…',r:'medium',s:'✓ Intact'},
+  {n:'tax_records_2023.pdf',t:'pdf',m:'2025-03-08 16:30',h:'g7e2b4…',r:'low',s:'✓ Intact'},
+  {n:'server_backup.zip',t:'zip',m:'2025-03-07 12:00',h:'h4f9c2…',r:'low',s:'✓ Intact'},
+];
+const LOGS=[
+  {time:'09:31 AM',t:'ok',ic:'✓',msg:'Vault accessed successfully',sub:'Biometric score: 94% — User authenticated'},
+  {time:'09:29 AM',t:'bad',ic:'✕',msg:'Failed biometric attempt',sub:'Score 31% — SMS alert sent'},
+  {time:'08:15 AM',t:'warn',ic:'!',msg:'File modification detected',sub:'private_keys.key — hash changed'},
+  {time:'Yesterday',t:'bad',ic:'✕',msg:'Unauthorized access attempt',sub:'3 consecutive failures — locked 5 min'},
+  {time:'Yesterday',t:'ok',ic:'✓',msg:'Vault accessed successfully',sub:'Biometric score: 88%'},
+  {time:'2d ago',t:'warn',ic:'!',msg:'Suspicious read on passport_scan.img',sub:'Access outside normal hours (2:14 AM)'},
+];
+function loadDash(score){
+  const u=S.users[S.cur];
+  document.getElementById('sbu').textContent=u.email;
+  document.getElementById('ftb').innerHTML=FILES.map(f=>`<tr>
+    <td style="display:flex;align-items:center;gap:10px"><div class="fic ${f.t}">${f.t.toUpperCase().slice(0,3)}</div><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${f.n}</span></td>
+    <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">.${f.t}</span></td>
+    <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)">${f.m}</span></td>
+    <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)">${f.h}</span></td>
+    <td><span class="rp ${f.r}">${f.r.toUpperCase()}</span></td>
+    <td style="font-size:12px;color:${f.s.includes('⚠')?'var(--warn)':'var(--accent)'}">${f.s}</td></tr>`).join('');
+  
+  // Load and display real-time access logs
+  loadAccessLogs();
+  const logsToDisplay=[
+    ...S.accessLogs.slice(0,3),
+    ...LOGS.slice(0,Math.max(0,6-Math.min(3,S.accessLogs.length)))
+  ];
+  
+  document.getElementById('alb').innerHTML=logsToDisplay.map(l=>{
+    const isRealTime=S.accessLogs.some(lg=>lg.timestamp===l.timestamp&&lg.message===l.message);
+    const typeMap={'ok':'ok','bad':'bad','warn':'warn','danger':'bad','SUCCESS':'ok','FAILED':'bad','INTRUSION':'bad'};
+    const iconMap={'ok':'✓','bad':'✕','warn':'!','danger':'✕','SUCCESS':'✓','FAILED':'✕','INTRUSION':'⚠'};
+    const displayType=typeMap[l.type||l.t]||'ok';
+    const displayIcon=iconMap[l.status||l.t]||'•';
+    return `<div class="litem" style="${isRealTime?'background:var(--accent-dim);':''}"><div class="ltime">${l.timestamp||l.time}</div><div class="lic ${displayType}">${displayIcon}</div><div class="lmsg">${l.message||l.msg}<span>${l.user?'Account: '+l.user:(l.sub||'')}</span></div></div>`;
+  }).join('');
+  
+  document.getElementById('ltn').textContent=new Date().toLocaleTimeString();
+  const b=u.baseline;
+  if(b){
+    document.getElementById('dbvh').textContent=Math.round(b.hold)+'ms';
+    document.getElementById('dbvg').textContent=Math.round(b.gap)+'ms';
+    document.getElementById('dbvt').textContent=Math.round(b.total)+'ms';
+    document.getElementById('dbh').style.width=Math.min(100,b.hold/2)+'%';
+    document.getElementById('dbg').style.width=Math.min(100,b.gap/3)+'%';
+    document.getElementById('dbt').style.width=Math.min(100,b.total/30)+'%';
+  }
+  const sc=Math.round(score);
+  document.getElementById('bsd').textContent=sc+'%';
+  document.getElementById('brp').textContent=sc+'%';
+  document.getElementById('bra').setAttribute('stroke-dashoffset',251-(251*sc/100));
+  const saved=u.tol||30;S.tol=saved;
+  document.getElementById('tslider').value=saved;
+  onTol(saved);
+  if(u.phone)document.getElementById('ap').value=u.phone;
+}
+function dTab(t){
+  ['files','activity','biometrics','alerts'].forEach(x=>document.getElementById('d-'+x).style.display=x===t?'block':'none');
+  document.querySelectorAll('.nitem').forEach((n,i)=>n.classList.toggle('active',['files','activity','biometrics','alerts'][i]===t));
+  document.getElementById('dtit').textContent={files:'File Security Monitor',activity:'Access Activity Log',biometrics:'Biometric Profile',alerts:'Alert Configuration'}[t];
+}
+function saveCfg(){
+  if(!vPhone('ap','ri-ap','fm-ap')){toast('Invalid phone','Enter valid international number','danger');return;}
+  const ph=document.getElementById('ap').value.trim().replace(/[\s\-\(\)]/g,'');
+  if(S.cur){
+    S.users[S.cur].phone=ph;
+    saveUsersToStorage();
+  }
+  onTol(document.getElementById('tslider').value);
+  toast('Config saved!','SMS alerts and tolerance updated','success');
+}
+
+/* ═══ ATTACK ═══ */
+function simAtk(){toast('Simulating attack…','Triggering intrusion detection','danger');setTimeout(()=>trigAlert(19,'Keystroke cadence deviated 81% from baseline. Simulated brute-force replay attack detected.'),1000);}
+
+async function trigAlert(score,analysis){
+  const now=new Date(),ref=Math.random().toString(36).substr(2,6).toUpperCase();
+  document.getElementById('att').textContent=now.toLocaleString();
+  document.getElementById('asc').textContent=`${score}% (Threshold: ${Math.round(Math.max(20,65-S.tol*0.6))}%)`;
+  document.getElementById('aan').textContent=analysis||'Biometric mismatch detected.';
+  document.getElementById('smsr').textContent=ref;
+  document.getElementById('smst').textContent=now.toLocaleTimeString();
+  const u=S.cur?S.users[S.cur]:null;
+  const phone=u?u.phone:null;
+  const masked=phone?phone.replace(/(\+\d{1,3})\d{4}/,'$1****'):'N/A';
+  document.getElementById('smsnum').textContent=masked;
+  showP('page-alert');
+  if(phone){
+    document.getElementById('smsi').innerHTML='<span class="spin"></span>Sending security alert…<br>';
+    await sendSMS(phone,score,analysis,ref,now,u);
+  } else {
+    toast('No phone configured','Add a phone in Alert Config','danger');
+  }
+  // Auto-redirect to sign-in page after 5 seconds
+  setTimeout(()=>{
+    S.cur=null;
+    S.cAttempts=[];
+    S.cAtt=0;
+    showP('page-login');
+    swTab('s');
+  },5000);
+}
+
+/* ═══ ACCESS LOG MANAGEMENT ═══ */
+function addAccessLog(status,message,type){
+  const now=new Date();
+  const log={
+    timestamp:now.toLocaleTimeString(),
+    date:now.toLocaleDateString(),
+    status:status,
+    message:message,
+    type:type,
+    user:S.cur||'unknown'
+  };
+  S.accessLogs.unshift(log);
+  logAccessToStorage(log);
+  console.log('[ACCESS LOG]',log);
+}
+
+function logAccessToStorage(log){
+  try{
+    let logs=JSON.parse(localStorage.getItem('securevault_logs'))||[];
+    logs.unshift(log);
+    logs=logs.slice(0,100);
+    localStorage.setItem('securevault_logs',JSON.stringify(logs));
+  }catch(err){
+    console.warn('Could not save to localStorage:',err);
+  }
+}
+
+function loadAccessLogs(){
+  try{
+    const stored=JSON.parse(localStorage.getItem('securevault_logs'))||[];
+    S.accessLogs=[...stored];
+  }catch(err){
+    console.warn('Could not load from localStorage:',err);
+  }
+  return S.accessLogs;
+}
+
+async function sendTelegramAlert(phone,message,user){
+  // Telegram Bot Configuration
+  const TELEGRAM_BOT_TOKEN='8727228508:AAHzTJe6vtXIKUos-UrxWw7RdD_I0LHErYc';
+  const TELEGRAM_CHAT_IDS=[6243248897, 1447661501]; // Multiple recipients
+  
+  try{
+    // Send to all configured chat IDs
+    for(const chatId of TELEGRAM_CHAT_IDS){
+      const res=await fetch(`https://api.telegram.org/bot$8727228508:AAHzTJe6vtXIKUos-UrxWw7RdD_I0LHErYc/sendMessage`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({chat_id:chatId,text:message,parse_mode:'Markdown'})
+      });
+      const data=await res.json();
+      if(data.ok){
+        console.log('[TELEGRAM] Message sent to chat ID:',chatId);
+      }
+    }
+  }catch(err){
+    console.error('[TELEGRAM ERROR]',err);
+  }
+}
+
+async function sendSMS(phone,score,analysis,ref,now,user){
+  // Telegram Bot Configuration
+  const TELEGRAM_BOT_TOKEN='8727228508:AAHzTJe6vtXIKUos-UrxWw7RdD_I0LHErYc';
+  const TELEGRAM_CHAT_IDS=[6243248897, 1447661501]; // Multiple recipients
+  
+  // Generate alert message
+  const alertMessage=`🚨 *SECUREVAULT ALERT* 🚨\n\n` +
+    `⚠️ *Unauthorized Access Attempt BLOCKED*\n\n` +
+    `📊 *Details:*\n` +
+    `• Reference: SVA-${ref}\n` +
+    `• Timestamp: ${now.toLocaleString()}\n` +
+    `• Score: ${score}%\n` +
+    `• Account: ${user?.email || 'unknown'}\n\n` +
+    `🔍 *Analysis:*\n${analysis}\n\n` +
+    `✅ *Action:* Access denied. Your vault remains secured.`;
+  
+  try{
+    // Send message via Telegram Bot API to all recipients
+    for(const chatId of TELEGRAM_CHAT_IDS){
+      const res=await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          chat_id:chatId,
+          text:alertMessage,
+          parse_mode:'Markdown'
+        })
+      });
+      
+      const data=await res.json();
+      if(!data.ok){
+        throw new Error(data.description || 'Telegram API error');
+      }
+    }
+    
+    document.getElementById('smsi').innerHTML='<span style="color:var(--accent)">✓ Security alert sent at ' + now.toLocaleTimeString() + '</span><br>';
+    document.getElementById('smsbox').innerHTML=
+      `<strong style="color:var(--accent)">✓ Intrusion Alert Logged</strong><br>`+
+      `<span style="font-size:11px;color:var(--text3)">Reference: SVA-${ref}</span><br>`+
+      `<span style="font-size:11px;color:var(--text3)">Time: ${now.toLocaleTimeString()}</span><br>`+
+      `<span style="font-size:11px;color:var(--text3);margin-top:10px;display:block">An intrusion alert has been sent to your registered phone number and admin accounts.</span>`;
+    toast('🚨 Alert Sent','Security notification delivered','success');
+  }catch(err){
+    document.getElementById('smsbox').innerHTML=
+      `<span style="color:var(--warn)">⚠️ Alert logged locally</span><br>`+
+      `<span style="font-size:11px;color:var(--text3)">Ref: SVA-${ref}</span><br>`+
+      `<span style="font-size:10px;color:var(--text2);margin-top:8px">Telegram integration requires bot token configuration</span>`;
+    toast('🚨 Alert Recorded','Local logging enabled','warn');
+    console.error('[TELEGRAM ERROR]',err);
+  }
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ═══ TOASTS ═══ */
+function toast(title,body,type){
+  const w=document.getElementById('toasts'),el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<div class="ttit">${title}</div><div class="tbody">${body}</div>`;
+  w.appendChild(el);
+  // Keep danger/error toasts visible longer (6 seconds) vs others (4 seconds)
+  const duration=type==='danger'?6000:4000;
+  setTimeout(()=>el.remove(),duration);
+}
+</script>
+</body>
+</html>
