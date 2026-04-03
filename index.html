@@ -57,12 +57,15 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 /* FIELDS */
 .field{margin-bottom:16px;position:relative;}
 .field label{display:block;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
-.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 34px 11px 14px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s,background .3s;}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 40px 11px 14px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s,background .3s;}
 .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--inp-ok);}
 .field input.err{border-color:var(--danger);box-shadow:0 0 0 3px var(--inp-err);}
 .field input.ok{border-color:var(--accent);}
 .field input::placeholder{color:var(--text3);}
 .ficon{position:absolute;right:11px;bottom:12px;font-size:13px;pointer-events:none;}
+.eye-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px 8px;width:auto;height:auto;display:flex;align-items:center;justify-content:center;transition:color .2s;pointer-events:auto;}
+.eye-toggle:hover{color:var(--accent);}
+.typing-zone .eye-toggle{right:8px;top:50%;transform:translateY(-50%);padding:4px 8px;}
 .fmsg{font-size:11px;font-family:'IBM Plex Mono',monospace;margin-top:5px;min-height:14px;}
 .fmsg.err{color:var(--danger);}
 .fmsg.ok{color:var(--accent);}
@@ -76,7 +79,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 /* TYPING */
 .typing-zone{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:16px;margin-bottom:20px;transition:background .3s;}
-.typing-zone input{width:100%;background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--accent);letter-spacing:8px;text-align:center;outline:none;}
+.typing-zone input{width:100%;background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--accent);letter-spacing:8px;text-align:center;outline:none;padding-right:36px;}
 .dots{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
 .dot{width:10px;height:10px;border-radius:50%;border:1px solid var(--border2);background:transparent;transition:background .3s;}
 .dot.done{background:var(--accent);border-color:var(--accent);}
@@ -247,6 +250,7 @@ tr:hover td{background:var(--accent-dim);}
       <div class="field">
         <label>Create Password</label>
         <input type="password" id="rpw" placeholder="Min 8 characters" oninput="vPass()">
+        <button type="button" class="eye-toggle" onclick="togglePasswordView('rpw')" title="Show/Hide password">👁️</button>
         <div class="ficon" id="ri-rpw"></div><div class="fmsg" id="fm-rpw"></div>
       </div>
       <button type="button" class="btn" onclick="doReg()">Create Account →</button>
@@ -262,6 +266,8 @@ tr:hover td{background:var(--accent-dim);}
       <div class="field">
         <label>Password</label>
         <input type="password" id="spw" placeholder="Your password">
+        <button type="button" class="eye-toggle" onclick="togglePasswordView('spw')" title="Show/Hide password">👁️</button>
+        <div class="fmsg" id="fm-spw"></div>
       </div>
       <button type="button" class="btn" onclick="doSI()">Sign In →</button>
     </div>
@@ -281,6 +287,7 @@ tr:hover td{background:var(--accent-dim);}
     <div class="dots"><div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div></div>
     <div class="typing-zone">
       <input type="password" id="ci" placeholder="Type your password…" autocomplete="off" onkeydown="onCK(event)">
+      <button type="button" class="eye-toggle" onclick="togglePasswordView('ci')" title="Show/Hide password">👁️</button>
       <div class="tbar-wrap"><div class="tbar" id="cbar"></div></div>
     </div>
     <div id="cst" class="hint" style="text-align:center;margin-bottom:12px">Attempt 1 of 3 — type and press Enter</div>
@@ -291,6 +298,7 @@ tr:hover td{background:var(--accent-dim);}
       <div class="brow"><div class="blbl">Inter-Key Gap</div><div class="bbar"><div class="bfill" id="mg" style="width:0%"></div></div><div class="bval" id="mvg">—</div></div>
       <div class="brow"><div class="blbl">Total Time</div><div class="bbar"><div class="bfill" id="mt" style="width:0%"></div></div><div class="bval" id="mvt">—</div></div>
     </div>
+    <button type="button" class="btn ghost" onclick="showP('page-login')" style="margin-top:20px">← Back to Login</button>
   </div>
 </div>
 
@@ -307,6 +315,7 @@ tr:hover td{background:var(--accent-dim);}
     <div class="dots"><div class="dot" id="bd0"></div><div class="dot" id="bd1"></div><div class="dot" id="bd2"></div></div>
     <div class="typing-zone">
       <input type="password" id="bi" placeholder="Enter password…" autocomplete="off" onkeydown="onBK(event)">
+      <button type="button" class="eye-toggle" onclick="togglePasswordView('bi')" title="Show/Hide password">👁️</button>
       <div class="tbar-wrap"><div class="tbar" id="bbar"></div></div>
     </div>
     <div id="bst" class="hint" style="text-align:center;margin-bottom:12px">Attempt 1 of 3</div>
@@ -318,6 +327,7 @@ tr:hover td{background:var(--accent-dim);}
       <div class="brow"><div class="blbl">Hold Time Match</div><div class="bbar"><div class="bfill" id="bh" style="width:0%"></div></div><div class="bval" id="bvh">—</div></div>
       <div class="brow"><div class="blbl">Speed Match</div><div class="bbar"><div class="bfill" id="bs" style="width:0%"></div></div><div class="bval" id="bvs">—</div></div>
     </div>
+    <button type="button" class="btn ghost" onclick="showP('page-login')" style="margin-top:20px">← Back to Login</button>
   </div>
 </div>
 
@@ -494,6 +504,18 @@ function toggleTheme(){
 
 /* ═══ NAVIGATION ═══ */
 function showP(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function togglePasswordView(inputId){
+  const input=document.getElementById(inputId);
+  if(!input) return;
+  const btn=document.querySelector(`button[onclick="togglePasswordView('${inputId}')"]`);
+  if(input.type==='password'){
+    input.type='text';
+    if(btn) btn.textContent='🙈';
+  } else {
+    input.type='password';
+    if(btn) btn.textContent='👁️';
+  }
+}
 function swTab(t){
   document.getElementById('treg').style.display=t==='r'?'':'none';
   document.getElementById('tsi').style.display=t==='s'?'':'none';
